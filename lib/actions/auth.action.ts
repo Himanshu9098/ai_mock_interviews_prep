@@ -87,6 +87,22 @@ export async function signIn(params: SignInParams) {
     }
 }
 
+export async function signOut() {
+try{    const cookieStore = await cookies();
+    cookieStore.delete('session');
+    return {
+        success: true,
+        message: 'Signed out successfully.'
+    }}
+    catch (e: any) {
+        console.error('Error signing out', e);
+        return {
+            success: false,
+            message: "Failed to sign out"
+        }
+    }
+}    
+
 export async function getCurrentUser(): Promise<User | null> {
     const cookieStore = await cookies();
     const sessionCookie = cookieStore.get('session')?.value;
@@ -101,10 +117,10 @@ export async function getCurrentUser(): Promise<User | null> {
             return null; // User does not exist in the database
         }
         
-        return{
-            ...userRecord.data(),
-            id: decodedClaims.id,
-        } as User;
+    return {
+      ...userRecord.data(),
+      id: userRecord.id,
+    } as User;
     } catch (error) {
         console.error('Error getting current user', error);
         return null; // Error occurred while verifying the session cookie
@@ -116,4 +132,44 @@ export async function isAuthenticated() {
     const user = await getCurrentUser();
 
     return !!user; // Returns true if user exists, false otherwise
+}
+
+export async function getInterviewByUserId(userId: string): Promise<Interview[] | null> {
+    try {
+        const interviews = await db
+        .collection('interviews')
+        .where('userId', '==', userId)
+        .orderBy('createdAt', 'desc')
+        .get();
+
+        return interviews.docs.map(doc => ({
+            id: doc.id,
+            ...doc.data(),
+        })) as Interview[];
+    } catch (error) {
+        console.error('Error fetching interview by user ID', error);
+        return null; // Error occurred while fetching the interview
+    }
+}
+
+export async function getLatestInterviews(params : GetLatestInterviewsParams): Promise<Interview[] | null> {
+    try {
+        const {userId , limit = 10} = params;
+
+        const interviews = await db
+        .collection('interviews')
+        .orderBy('createdAt', 'desc')
+        .where('userId', '!=', userId)
+        .where('isFinalized', '==', true)
+        .limit(limit)
+        .get();
+
+        return interviews.docs.map(doc => ({
+            id: doc.id,
+            ...doc.data(),
+        })) as Interview[];
+    } catch (error) {
+        console.error('Error fetching interviews', error);
+        return null; // Error occurred while fetching the interview
+    }
 }
