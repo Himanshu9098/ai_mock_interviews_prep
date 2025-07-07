@@ -160,7 +160,7 @@ export async function getLatestInterviews(params : GetLatestInterviewsParams): P
         .collection('interviews')
         .orderBy('createdAt', 'desc')
         .where('userId', '!=', userId)
-        .where('isFinalized', '==', true)
+        .where('finalized', '==', true)
         .limit(limit)
         .get();
 
