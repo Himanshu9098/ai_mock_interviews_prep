@@ -6,6 +6,8 @@ import { cn } from '@/lib/utils';
 import { useRouter } from 'next/navigation';
 import { vapi } from '@/lib/vapi.sdk';
 import { interviewer } from '@/constants';
+import { create } from 'domain';
+import { createFeedback } from '@/lib/actions/general.action';
 
 
 enum CallStatus {
@@ -72,13 +74,14 @@ const Agent = ({ userName, userId, type, interviewId, questions }: AgentProps) =
 
   const handleGenerateFeedback = async (messages: SavedMessage[]) => {
     console.log("Generating feedback for messages:", messages);
-    const {success, id} ={
-      success: true,
-      id: '12345' // Mocked response, replace with actual API call
-    }
+    const result = await createFeedback({
+      interviewId:interviewId!,
+      userId:userId!,
+      transcript: messages
+    })
 
-    if(success && id){
-      console.log("Feedback generated successfully with ID:", id);
+    if(result.success && result.feedbackId){
+      console.log("Feedback generated successfully with ID:", result.feedbackId);
       router.push(`/interview/${interviewId}/feedback`);
     }
     else{
